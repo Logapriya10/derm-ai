@@ -30,15 +30,18 @@ class ImageBranch(nn.Module):
 class SymptomMLP(nn.Module):
     def __init__(self):
         super().__init__()
-        self.net = nn.Sequential(
-            nn.Linear(SYMPTOM_DIM, 128), nn.BatchNorm1d(128), nn.ReLU(), nn.Dropout(0.3),
-            nn.Linear(128, 64),          nn.BatchNorm1d(64),  nn.ReLU(), nn.Dropout(0.25),
-            nn.Linear(64, 32),           nn.BatchNorm1d(32),  nn.ReLU(), nn.Dropout(0.2),
-            nn.Linear(32, NUM_CLASSES),
+        self.fc = nn.Sequential(
+            nn.Linear(SYMPTOM_DIM, 128),  # fc.0
+            nn.ReLU(),                     # fc.1
+            nn.Dropout(0.3),               # fc.2
+            nn.Linear(128, 64),            # fc.3
+            nn.ReLU(),                     # fc.4
+            nn.Dropout(0.25),              # fc.5
+            nn.Linear(64, NUM_CLASSES),    # fc.6
         )
 
     def forward(self, x):
-        return self.net(x)
+        return self.fc(x)
 
 
 class FusionHead(nn.Module):
