@@ -47,6 +47,7 @@ def load_models():
         print(f"[ERROR] Model load failed: {e}", flush=True)
         traceback.print_exc()
         return False
+load_models()
 
 load_dotenv()
 
