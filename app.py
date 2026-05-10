@@ -1,3 +1,4 @@
+from flask import send_from_directory
 import os, io, base64, traceback
 import numpy as np
 from PIL import Image
@@ -329,6 +330,13 @@ def predict():
         return jsonify({"error": str(e)}), 500
 
 load_models()
-
+# ── Serve React frontend ────────────────────────────────
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def serve_react(path):
+    dist_dir = os.path.join(BASE_DIR, "dist")
+    if path and os.path.exists(os.path.join(dist_dir, path)):
+        return send_from_directory(dist_dir, path)
+    return send_from_directory(dist_dir, "index.html")
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
