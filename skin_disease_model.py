@@ -4,7 +4,7 @@ from torchvision.models import efficientnet_b3, EfficientNet_B3_Weights
 
 CLASSES     = ["melanoma", "vitiligo", "psoriasis", "ringworm", "acne", "normal"]
 NUM_CLASSES = 6
-SYMPTOM_DIM = 15
+SYMPTOM_DIM = 12
 
 class ImageBranch(nn.Module):
     def __init__(self):
@@ -26,19 +26,21 @@ class ImageBranch(nn.Module):
         x = torch.flatten(x, 1)
         return self.classifier(x)
 
-
 class SymptomMLP(nn.Module):
     def __init__(self):
         super().__init__()
         self.fc = nn.Sequential(
-            nn.Linear(SYMPTOM_DIM, 128),  # fc.0
-            nn.ReLU(),                     # fc.1
-            nn.Dropout(0.3),               # fc.2
-            nn.Linear(128, 64),            # fc.3
-            nn.ReLU(),                     # fc.4
-            nn.Dropout(0.25),              # fc.5
-            nn.Linear(64, NUM_CLASSES),    # fc.6
+            nn.Linear(12, 64),          # fc.0
+            nn.ReLU(),                   # fc.1
+            nn.Dropout(0.3),             # fc.2
+            nn.Linear(64, 32),           # fc.3
+            nn.ReLU(),                   # fc.4
+            nn.Dropout(0.25),            # fc.5
+            nn.Linear(32, NUM_CLASSES),  # fc.6
         )
+
+    def forward(self, x):
+        return self.fc(x)
 
     def forward(self, x):
         return self.fc(x)
