@@ -11,10 +11,11 @@ models = {
 
 for filename, file_id in models.items():
     path = os.path.join(BASE_DIR, filename)
-    if not os.path.exists(path):
-        print(f"Downloading {filename}...")
-        url = f"https://drive.google.com/uc?export=download&id={file_id}"
-        gdown.download(url, path, quiet=False)
-        print(f"Done: {filename} — {os.path.getsize(path)} bytes")
-    else:
-        print(f"Already exists: {filename}")
+    # Always delete and redownload to ensure fresh files
+    if os.path.exists(path):
+        os.remove(path)
+        print(f"Deleted old {filename}", flush=True)
+    print(f"Downloading {filename}...", flush=True)
+    url = f"https://drive.google.com/uc?export=download&id={file_id}"
+    gdown.download(url, path, quiet=False)
+    print(f"Done: {filename} — {os.path.getsize(path)} bytes", flush=True)
