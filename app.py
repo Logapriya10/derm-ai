@@ -15,22 +15,29 @@ from flask_cors import CORS
 import threading
 
 def download_and_load():
-    import gdown
-    base = os.path.dirname(os.path.abspath(__file__))
-    models = {
-        "cnn_best.pt":    "1soKrd3OY7Geyb_ew723u4Ssn4CFAqG2k",
-        "mlp_best.pt":    "1aZGPYSh7qSDhOZ8doTeQf7RIS5TDG4aj",
-        "fusion_best.pt": "1mkw2s4OMbgMsHyH5wR25pijGw31olaKF",
-    }
-    for filename, file_id in models.items():
-        path = os.path.join(base, filename)
-        if not os.path.exists(path):
-            print(f"[DOWNLOAD] Downloading {filename}...")
-            gdown.download(id=file_id, output=path, quiet=False)
-            print(f"[OK] {filename} downloaded")
-    load_models()
+    try:
+        import gdown
+        base = os.path.dirname(os.path.abspath(__file__))
+        models = {
+            "cnn_best.pt":    "1soKrd3OY7Geyb_ew723u4Ssn4CFAqG2k",
+            "mlp_best.pt":    "1aZGPYSh7qSDhOZ8doTeQf7RIS5TDG4aj",
+            "fusion_best.pt": "1mkw2s4OMbgMsHyH5wR25pijGw31olaKF",
+        }
+        for filename, file_id in models.items():
+            path = os.path.join(base, filename)
+            if not os.path.exists(path):
+                print(f"[DOWNLOAD] Downloading {filename}...", flush=True)
+                url = f"https://drive.google.com/uc?export=download&id={file_id}"
+                gdown.download(url, path, quiet=False)
+                size = os.path.getsize(path) if os.path.exists(path) else 0
+                print(f"[OK] {filename} downloaded — {size} bytes", flush=True)
+            else:
+                print(f"[SKIP] {filename} already exists", flush=True)
+        load_models()
+    except Exception as e:
+        print(f"[ERROR] download_and_load failed: {e}", flush=True)
+        traceback.print_exc()
 
-# Start download in background so Flask starts immediately
 threading.Thread(target=download_and_load, daemon=True).start()
 
 load_dotenv()
