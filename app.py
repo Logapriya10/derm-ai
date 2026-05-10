@@ -13,40 +13,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 import threading
-def load_models():
-    global cnn, mlp, fusion, gradcam_engine
-    try:
-        from skin_disease_model import ImageBranch, SymptomMLP, FusionHead
 
-        cnn_path    = os.path.join(BASE_DIR, "cnn_best.pt")
-        mlp_path    = os.path.join(BASE_DIR, "mlp_best.pt")
-        fusion_path = os.path.join(BASE_DIR, "fusion_best.pt")
-
-        print(f"[LOAD] Loading CNN from {cnn_path}", flush=True)
-        cnn = ImageBranch().to(DEVICE)
-        cnn.load_state_dict(torch.load(cnn_path, map_location=DEVICE, weights_only=True))
-        cnn.eval()
-        print("[LOAD] CNN OK", flush=True)
-
-        print(f"[LOAD] Loading MLP from {mlp_path}", flush=True)
-        mlp = SymptomMLP().to(DEVICE)
-        mlp.load_state_dict(torch.load(mlp_path, map_location=DEVICE, weights_only=True))
-        mlp.eval()
-        print("[LOAD] MLP OK", flush=True)
-
-        print(f"[LOAD] Loading Fusion from {fusion_path}", flush=True)
-        fusion = FusionHead().to(DEVICE)
-        fusion.load_state_dict(torch.load(fusion_path, map_location=DEVICE, weights_only=True))
-        fusion.eval()
-        print("[LOAD] Fusion OK", flush=True)
-
-        gradcam_engine = GradCAM(cnn)
-        print(f"[OK] All 3 models + GradCAM loaded | device={DEVICE}", flush=True)
-        return True
-    except Exception as e:
-        print(f"[ERROR] Model load failed: {e}", flush=True)
-        traceback.print_exc()
-        return False
 load_models()
 
 load_dotenv()
