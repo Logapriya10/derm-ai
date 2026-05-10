@@ -13,7 +13,6 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 import threading
-
 def download_and_load():
     try:
         import gdown
@@ -29,15 +28,26 @@ def download_and_load():
                 print(f"[DOWNLOAD] Downloading {filename}...", flush=True)
                 url = f"https://drive.google.com/uc?export=download&id={file_id}"
                 gdown.download(url, path, quiet=False)
-                size = os.path.getsize(path) if os.path.exists(path) else 0
-                print(f"[OK] {filename} downloaded — {size} bytes", flush=True)
+                print(f"[OK] {filename} downloaded — {os.path.getsize(path)} bytes", flush=True)
             else:
                 print(f"[SKIP] {filename} already exists", flush=True)
-        load_models()
+
+        # Only load after ALL files downloaded
+        all_present = all(
+            os.path.exists(os.path.join(base, f))
+            for f in models.keys()
+        )
+        if all_present:
+            print("[OK] All models present, loading...", flush=True)
+            load_models()
+        else:
+            print("[ERROR] Some models missing after download!", flush=True)
+
     except Exception as e:
         print(f"[ERROR] download_and_load failed: {e}", flush=True)
         traceback.print_exc()
 
+# Remove any direct load_models() call — only load via this thread
 threading.Thread(target=download_and_load, daemon=True).start()
 
 load_dotenv()
