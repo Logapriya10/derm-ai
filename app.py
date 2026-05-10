@@ -13,42 +13,40 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 import threading
-def download_and_load():
+def load_models():
+    global cnn, mlp, fusion, gradcam_engine
     try:
-        import gdown
-        base = os.path.dirname(os.path.abspath(__file__))
-        models = {
-            "cnn_best.pt":    "1soKrd3OY7Geyb_ew723u4Ssn4CFAqG2k",
-            "mlp_best.pt":    "1aZGPYSh7qSDhOZ8doTeQf7RIS5TDG4aj",
-            "fusion_best.pt": "1mkw2s4OMbgMsHyH5wR25pijGw31olaKF",
-        }
-        for filename, file_id in models.items():
-            path = os.path.join(base, filename)
-            if not os.path.exists(path):
-                print(f"[DOWNLOAD] Downloading {filename}...", flush=True)
-                url = f"https://drive.google.com/uc?export=download&id={file_id}"
-                gdown.download(url, path, quiet=False)
-                print(f"[OK] {filename} downloaded — {os.path.getsize(path)} bytes", flush=True)
-            else:
-                print(f"[SKIP] {filename} already exists", flush=True)
+        from skin_disease_model import ImageBranch, SymptomMLP, FusionHead
 
-        # Only load after ALL files downloaded
-        all_present = all(
-            os.path.exists(os.path.join(base, f))
-            for f in models.keys()
-        )
-        if all_present:
-            print("[OK] All models present, loading...", flush=True)
-            load_models()
-        else:
-            print("[ERROR] Some models missing after download!", flush=True)
+        cnn_path    = os.path.join(BASE_DIR, "cnn_best.pt")
+        mlp_path    = os.path.join(BASE_DIR, "mlp_best.pt")
+        fusion_path = os.path.join(BASE_DIR, "fusion_best.pt")
 
+        print(f"[LOAD] Loading CNN from {cnn_path}", flush=True)
+        cnn = ImageBranch().to(DEVICE)
+        cnn.load_state_dict(torch.load(cnn_path, map_location=DEVICE, weights_only=True))
+        cnn.eval()
+        print("[LOAD] CNN OK", flush=True)
+
+        print(f"[LOAD] Loading MLP from {mlp_path}", flush=True)
+        mlp = SymptomMLP().to(DEVICE)
+        mlp.load_state_dict(torch.load(mlp_path, map_location=DEVICE, weights_only=True))
+        mlp.eval()
+        print("[LOAD] MLP OK", flush=True)
+
+        print(f"[LOAD] Loading Fusion from {fusion_path}", flush=True)
+        fusion = FusionHead().to(DEVICE)
+        fusion.load_state_dict(torch.load(fusion_path, map_location=DEVICE, weights_only=True))
+        fusion.eval()
+        print("[LOAD] Fusion OK", flush=True)
+
+        gradcam_engine = GradCAM(cnn)
+        print(f"[OK] All 3 models + GradCAM loaded | device={DEVICE}", flush=True)
+        return True
     except Exception as e:
-        print(f"[ERROR] download_and_load failed: {e}", flush=True)
+        print(f"[ERROR] Model load failed: {e}", flush=True)
         traceback.print_exc()
-
-# Remove any direct load_models() call — only load via this thread
-threading.Thread(target=download_and_load, daemon=True).start()
+        return False
 
 load_dotenv()
 
