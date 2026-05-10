@@ -3,7 +3,7 @@ flask-cors
 torch==2.2.2
 torchvision==0.17.2
 pillow
-numpy
+numpy=1.26.4
 opencv-python-headless
 python-dotenv
 gunicorn
