@@ -7,4 +7,4 @@ numpy==1.26.4
 opencv-python-headless
 python-dotenv
 gunicorn
-gdown
+gdown==4.7.3

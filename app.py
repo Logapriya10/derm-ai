@@ -25,12 +25,13 @@ def download_models():
         if not os.path.exists(path):
             print(f"[DOWNLOAD] Downloading {filename}...")
             gdown.download(
-                f"https://drive.google.com/uc?id={file_id}",
-                path,
-                quiet=False,
-                fuzzy=True
+                id=file_id,
+                output=path,
+                quiet=False
             )
             print(f"[OK] {filename} downloaded")
+
+download_models()
 
 download_models()
 download_models()
