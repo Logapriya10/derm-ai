@@ -1,0 +1,11 @@
+{
+  "name": "DermNet — Skin Disease Detector",
+  "short_name": "DermNet",
+  "description": "AI-powered skin disease detection",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a14",
+  "theme_color": "#2A9D8F",
+  "orientation": "portrait",
+  "categories": ["medical", "health"]
+}
