@@ -12,7 +12,9 @@ import cv2
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
-def download_models():
+import threading
+
+def download_and_load():
     import gdown
     base = os.path.dirname(os.path.abspath(__file__))
     models = {
@@ -24,19 +26,12 @@ def download_models():
         path = os.path.join(base, filename)
         if not os.path.exists(path):
             print(f"[DOWNLOAD] Downloading {filename}...")
-            gdown.download(
-                id=file_id,
-                output=path,
-                quiet=False
-            )
+            gdown.download(id=file_id, output=path, quiet=False)
             print(f"[OK] {filename} downloaded")
+    load_models()
 
-download_models()
-
-download_models()
-download_models()
-
-download_models()
+# Start download in background so Flask starts immediately
+threading.Thread(target=download_and_load, daemon=True).start()
 
 load_dotenv()
 
@@ -290,11 +285,10 @@ def health():
     })
 
 
-# ── Predict ────────────────────────────────────────────────────
 @app.route("/predict", methods=["POST"])
 def predict():
     if cnn is None:
-        return jsonify({"error": "Models not loaded. Check server logs."}), 503
+        return jsonify({"error": "Models are still loading, please wait 1-2 minutes and try again."}), 503
 
     if "image" not in request.files:
         return jsonify({"error": "No image field in request."}), 400
