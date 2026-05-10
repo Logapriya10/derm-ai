@@ -1,64 +1,24 @@
-import torch
-import torch.nn as nn
-from torchvision.models import efficientnet_b3, EfficientNet_B3_Weights
+import os
+import gdown
 
-CLASSES     = ["melanoma", "vitiligo", "psoriasis", "ringworm", "acne", "normal"]
-NUM_CLASSES = 6
-SYMPTOM_DIM = 12
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FORCE = os.environ.get("FORCE_REDOWNLOAD", "0") == "1"
 
-class ImageBranch(nn.Module):
-    def __init__(self):
-        super().__init__()
-        base = efficientnet_b3(weights=EfficientNet_B3_Weights.IMAGENET1K_V1)
-        in_f = base.classifier[1].in_features
-        base.classifier = nn.Sequential(
-            nn.Dropout(0.4), nn.Linear(in_f, 512),
-            nn.SiLU(), nn.Dropout(0.3), nn.Linear(512, NUM_CLASSES),
-        )
-        # Store as flat attributes matching the saved checkpoint keys
-        self.features   = base.features
-        self.avgpool    = base.avgpool
-        self.classifier = base.classifier
+models = {
+    "cnn_best.pt":    "1soKrd3OY7Geyb_ew723u4Ssn4CFAqG2k",
+    "mlp_best.pt":    "1aZGPYSh7qSDhOZ8doTeQf7RIS5TDG4aj",
+    "fusion_best.pt": "1mkw2s4OMbgMsHyH5wR25pijGw31olaKF",
+}
 
-    def forward(self, x):
-        x = self.features(x)
-        x = self.avgpool(x)
-        x = torch.flatten(x, 1)
-        return self.classifier(x)
-
-class SymptomMLP(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.fc = nn.Sequential(
-            nn.Linear(12, 64),          # fc.0
-            nn.ReLU(),                   # fc.1
-            nn.Dropout(0.3),             # fc.2
-            nn.Linear(64, 32),           # fc.3
-            nn.ReLU(),                   # fc.4
-            nn.Dropout(0.25),            # fc.5
-            nn.Linear(32, NUM_CLASSES),  # fc.6
-        )
-
-    def forward(self, x):
-        return self.fc(x)
-
-    def forward(self, x):
-        return self.fc(x)
-
-
-class FusionHead(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.fc = nn.Sequential(
-            nn.Linear(NUM_CLASSES * 2, 64),  # fc.0
-            nn.ReLU(),                         # fc.1
-            nn.Dropout(0.2),                   # fc.2
-            nn.Linear(64, 32),                 # fc.3
-            nn.ReLU(),                         # fc.4
-            nn.Dropout(0.1),                   # fc.5
-            nn.Linear(32, NUM_CLASSES),        # fc.6
-        )
-
-    def forward(self, x):
-        return self.fc(x)
-    
+for filename, file_id in models.items():
+    path = os.path.join(BASE_DIR, filename)
+    if not os.path.exists(path) or FORCE:
+        if os.path.exists(path):
+            os.remove(path)
+            print(f"Deleted old {filename}")
+        print(f"Downloading {filename}...")
+        url = f"https://drive.google.com/uc?export=download&id={file_id}"
+        gdown.download(url, path, quiet=False)
+        print(f"Done: {filename} — {os.path.getsize(path)} bytes")
+    else:
+        print(f"Already exists: {filename}")
