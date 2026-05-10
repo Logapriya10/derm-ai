@@ -128,38 +128,20 @@ EVAL_TF = transforms.Compose([
     NORM,
 ])
 
-# ── GradCAM ────────────────────────────────────────────────────
-class GradCAM:
-    def __init__(self, model):
-        self.model       = model
-        self.gradients   = None
-        self.activations = None
-        # Hook last conv block of EfficientNet B3 = features[8]
-        target_layer = model.features[8]
-        target_layer.register_forward_hook(self._save_activation)
-        target_layer.register_full_backward_hook(self._save_gradient)
-
-    def _save_activation(self, module, input, output):
-        self.activations = output.detach()
-
-    def _save_gradient(self, module, grad_input, grad_output):
-        self.gradients = grad_output[0].detach()
-
-    def generate(self, img_tensor, class_idx=None):
-        self.model.eval()
-        img_tensor = img_tensor.clone().requires_grad_(True)
-        logits     = self.model(img_tensor)
-        if class_idx is None:
-            class_idx = logits.argmax(dim=1).item()
-        self.model.zero_grad()
-        logits[0, class_idx].backward()
-        weights = self.gradients.mean(dim=(2, 3), keepdim=True)
-        cam     = (weights * self.activations).sum(dim=1, keepdim=True)
-        cam     = F.relu(cam)
-        cam     = cam.squeeze().cpu().numpy()
-        cam     = cv2.resize(cam, (S, S))
-        cam     = (cam - cam.min()) / (cam.max() - cam.min() + 1e-8)
-        return cam, class_idx
+# ── GradCAM ── (disabled on free tier to prevent OOM)
+        gradcam_b64 = ""
+        try:
+            import psutil
+            mem = psutil.virtual_memory()
+            if mem.available > 200 * 1024 * 1024:  # only if >200MB free
+                img_tensor  = EVAL_TF(pil_img).unsqueeze(0).to(DEVICE)
+                cam, _      = gradcam_engine.generate(img_tensor, class_idx=pred_idx)
+                gradcam_b64 = apply_heatmap(pil_img, cam)
+                print("[OK] GradCAM generated")
+            else:
+                print("[SKIP] GradCAM skipped - low memory")
+        except Exception as e:
+            print(f"[WARN] GradCAM failed: {e}")
 
 
 def apply_heatmap(pil_img, cam):

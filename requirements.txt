@@ -8,3 +8,4 @@ opencv-python-headless
 python-dotenv
 gunicorn
 gdown==4.7.3
+psutil
